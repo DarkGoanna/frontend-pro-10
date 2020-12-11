@@ -99,6 +99,12 @@
             },
             allow: (massage) => confirm(massage),
         }
+
+        Object.defineProperty(toDo, '_list', {
+            writable: false,
+            configurable: false,
+        });
+        Object.freeze(toDo);
     </script>
 </body>
 </html>
