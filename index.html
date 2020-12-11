@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hw-10</title>
+</head>
+<body>
+    <script>
+        const toDo = {
+            _list: [],
+            get list () {
+                return this._list;
+            },
+            add: function (text) {
+                const id = Date.now();
+                if (typeof text === 'string') {
+                    text = text.trim();
+                }
+                //проверка на уникальность задачи
+                if (this.isUniqueText(text)) {
+                    this.list.push({
+                        text,
+                        id,
+                        isDone: false,
+                    });
+                }
+            },
+            edit: function (id, newText, isDone = false) {
+                const index = this.getNoteIndex(id);
+                if (typeof newText === 'string') {
+                    newText = newText.trim();
+                }
+                //если задача с таким id есть и она уникальна
+                if (index != -1 && this.isUniqueText(newText, isDone)) {
+                    //спрашиваем разрешение
+                    if (this.allow('Изменить выбранное задание?')) {
+                        this.list[index].text = newText;
+                        this.list[index].isDone = isDone;
+                    }
+                }
+                return this.list;
+            },
+            delete: function (id) {
+                const index = this.getNoteIndex(id);
+                //если задача с таким id есть и разрешение на удаление
+                if (index != -1 && this.allow('Уверены, что хотите удалить?')) {
+                    return this.list.splice(index, 1);
+                }
+            },
+            ready: function (id) {
+                var index = this.getNoteIndex(id);
+                if (index != -1) {
+                    this.list[index].isDone = true;
+                }
+                return this.list;
+            },
+            //метод принимает 1 или несколько аргументов
+            howMany: function (...arguments) {
+                let result = {};
+                const obj = this; //обьект toDo
+                //для каждого введенного аргумента будем вызывать сравнение
+                arguments.forEach(function(value) {
+                    switch (value) {
+                        case 'all': {
+                            result['всего заданий'] = obj.list.length;
+                            break;
+                        }
+                        case 'completed': {
+                            const completed = obj.list.reduce(function(acc, elem) {
+                                return elem.isDone ? ++acc : acc;
+                            }, 0);
+                            result['выполненых'] = completed;
+                            break;
+                        }
+                        case 'left': {
+                            const left = obj.list.reduce(function(acc, elem) {
+                                return elem.isDone ? acc : ++acc;
+                            }, 0);
+                            result['осталось выполнить'] = left;
+                            break;
+                        }
+                    }
+                });
+                return result;
+            },
+            isUniqueText: function (newText, isDone = false) {
+                for (let i = 0; i < this.list.length; i++) {
+                    if (this.list[i].text === newText && this.list[i].isDone === isDone) {
+                        return false;
+                    }
+                }
+                return true;
+            },
+            getNoteIndex: function (value) {
+                return this.list.findIndex(function (obj) {
+                    if (obj.id == value) return obj;
+                });
+            },
+            allow: (massage) => confirm(massage),
+        }
+    </script>
+</body>
+</html>
