@@ -12,13 +12,13 @@
             get list () {
                 return this._list;
             },
-            add: function (text) {
+            add (text) {
                 const id = Date.now();
                 if (typeof text === 'string') {
                     text = text.trim();
                 }
                 //проверка на уникальность задачи
-                if (this.isUniqueText(text)) {
+                if (this.isUnique(text)) {
                     this.list.push({
                         text,
                         id,
@@ -26,13 +26,13 @@
                     });
                 }
             },
-            edit: function (id, newText, isDone = false) {
+            edit (id, newText, isDone = false) {
                 const index = this.getNoteIndex(id);
                 if (typeof newText === 'string') {
                     newText = newText.trim();
                 }
                 //если задача с таким id есть и она уникальна
-                if (index != -1 && this.isUniqueText(newText, isDone)) {
+                if (index != -1 && this.isUnique(newText, isDone)) {
                     //спрашиваем разрешение
                     if (this.allow('Изменить выбранное задание?')) {
                         this.list[index].text = newText;
@@ -41,58 +41,39 @@
                 }
                 return this.list;
             },
-            delete: function (id) {
+            delete (id) {
                 const index = this.getNoteIndex(id);
                 //если задача с таким id есть и разрешение на удаление
                 if (index != -1 && this.allow('Уверены, что хотите удалить?')) {
                     return this.list.splice(index, 1);
                 }
             },
-            ready: function (id) {
-                var index = this.getNoteIndex(id);
+            ready (id) {
+                const index = this.getNoteIndex(id);
                 if (index != -1) {
                     this.list[index].isDone = true;
                 }
                 return this.list;
             },
-            //метод принимает 1 или несколько аргументов
-            howMany: function (...arguments) {
-                let result = {};
-                const obj = this; //обьект toDo
-                //для каждого введенного аргумента будем вызывать сравнение
-                arguments.forEach(function(value) {
-                    switch (value) {
-                        case 'all': {
-                            result['всего заданий'] = obj.list.length;
-                            break;
-                        }
-                        case 'completed': {
-                            const completed = obj.list.reduce(function(acc, elem) {
-                                return elem.isDone ? ++acc : acc;
-                            }, 0);
-                            result['выполненых'] = completed;
-                            break;
-                        }
-                        case 'left': {
-                            const left = obj.list.reduce(function(acc, elem) {
-                                return elem.isDone ? acc : ++acc;
-                            }, 0);
-                            result['осталось выполнить'] = left;
-                            break;
-                        }
-                    }
-                });
-                return result;
+            howMany () {
+                return {
+                    all: this.list.length,
+                    completed: this.list.reduce(function(acc, elem) {
+                        return elem.isDone ? ++acc : acc;
+                    }, 0),
+                    left: this.list.reduce(function(acc, elem) {
+                        return elem.isDone ? acc : ++acc;
+                    }, 0),
+                };
             },
-            isUniqueText: function (newText, isDone = false) {
-                for (let i = 0; i < this.list.length; i++) {
-                    if (this.list[i].text === newText && this.list[i].isDone === isDone) {
-                        return false;
-                    }
-                }
-                return true;
+            isUnique (newText, newStatus = false) {
+                const created = this.list.map(elem => {
+                    let {text, isDone:status} = elem;
+                    return `${text}/${status}`;
+                })
+                return created.includes(`${newText}/${newStatus}`) ? false : true;
             },
-            getNoteIndex: function (value) {
+            getNoteIndex (value) {
                 return this.list.findIndex(function (obj) {
                     if (obj.id == value) return obj;
                 });
@@ -102,6 +83,7 @@
 
         Object.defineProperty(toDo, '_list', {
             writable: false,
+            enumerable: true,
             configurable: false,
         });
         Object.freeze(toDo);
