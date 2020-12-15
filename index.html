@@ -12,63 +12,52 @@
             get list () {
                 return this._list;
             },
-            add (text) {
+            addNote (text) {
                 const id = Date.now();
                 if (typeof text === 'string') {
                     text = text.trim();
                 }
-                //проверка на уникальность задачи
-                if (this.isUnique(text)) {
+                if (this.isUniqueNote(text)) {
                     this.list.push({
                         text,
                         id,
-                        isDone: false,
+                        isComplete: false,
                     });
                 }
             },
-            edit (id, newText, isDone = false) {
+            editNote (id, newText, allow, isComplete = false) {
                 const index = this.getNoteIndex(id);
                 if (typeof newText === 'string') {
                     newText = newText.trim();
                 }
-                //если задача с таким id есть и она уникальна
-                if (index != -1 && this.isUnique(newText, isDone)) {
-                    //спрашиваем разрешение
-                    if (allow('Изменить выбранное задание?')) {
-                        this.list[index].text = newText;
-                        this.list[index].isDone = isDone;
-                    }
+                if (index != -1 && allow && this.isUniqueNote(newText, isComplete)) {
+                    this.list[index].text = newText;
+                    this.list[index].isComplete = isComplete;
                 }
-                return this.list;
             },
-            delete (id) {
+            removeNote (id, allow) {
                 const index = this.getNoteIndex(id);
-                //если задача с таким id есть и разрешение на удаление
-                if (index != -1 && allow('Уверены, что хотите удалить?')) {
+                if (index != -1 && allow) {
                     return this.list.splice(index, 1);
                 }
             },
-            ready (id) {
+            setComplete (id, allow) {
                 const index = this.getNoteIndex(id);
                 if (index != -1) {
-                    this.list[index].isDone = true;
+                    this.list[index].isComplete = true;
                 }
-                return this.list;
             },
-            howMany () {
-                return {
+            getNotesStatus () {
+                const result = {
                     all: this.list.length,
-                    completed: this.list.reduce(function(acc, elem) {
-                        return elem.isDone ? ++acc : acc;
-                    }, 0),
-                    left: this.list.reduce(function(acc, elem) {
-                        return elem.isDone ? acc : ++acc;
-                    }, 0),
-                };
+                    completed: this.list.filter(elem => elem.isComplete ? true : false).length,
+                }
+                result.uncompleted = result.all - result.completed;
+                return result;
             },
-            isUnique (newText, newStatus = false) {
+            isUniqueNote (newText, newStatus = false) {
                 const created = this.list.map(elem => {
-                    let {text, isDone:status} = elem;
+                    let {text, isComplete:status} = elem;
                     return `${text}/${status}`;
                 })
                 return created.includes(`${newText}/${newStatus}`) ? false : true;
@@ -86,8 +75,6 @@
             configurable: false,
         });
         Object.freeze(toDo);
-
-        const allow = (massage) => confirm(massage);
     </script>
 </body>
 </html>
